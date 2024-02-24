@@ -16,9 +16,9 @@ You can use the following code to execute quantum sampling simulated by Qiskit. 
 
 `s0` represents the number of times Amplifier is initially sampled classically, and `lowest` indicates that Amplifier will sample each group at least `lowest` times.
 
-```sh
+```bash
 python3 amplifier.py \
-    -dataset dataset/small-test.csv \
+    -dataset dataset/demo-test.csv \
     -P P \
     -G G \
     -M M \
@@ -67,13 +67,39 @@ Stratified Sampling(sum) avg error:  0.2894106325099812
 
 **Please note that during testing**, it's important to control the size of the dataset and the range of values for each attribute(`P`, `G`, `M`), as the speed of the simulator increases exponentially with the number of qubits used. Excessively large datasets may result in significantly slow simulation speeds.
 
+### multiple predicate
+
+Example SQL: `select G, agg(M) from dataset where P < 1 and P >= 0 group by G`
+
+```bash
+python3 amplifier.py \
+    -dataset dataset/demo-test.csv \
+    -P P P \        # array
+    -G G \
+    -M M \
+    -P_V 1 0 \      # array
+    -op '<' '>=' \  # array
+    -s0 100 \
+    -lowest 20 \
+    -MultiTest 1 \
+    -min_data_prob 0.1 \
+    -min_shots 30 \
+    -fast-simu 0 \
+    -sup_shots 1.3
+```
+
+
 ### using fast-simu
 
-If you want faster execution speed, we recommend enabling the `-fast-simu` switch, which will utilize a classical method equivalent to the quantum circuit portion of the amplifier to provide faster execution results.
+If you want faster execution speed, you can enabling the `-fast-simu` switch, which will utilize a classical method to **simulate** the amplitude amplification to provide faster execution results.
 
-```sh
+**SQL: `select DayofMonth, agg(Distance) from flights where Origin=19 group by DayofMonth`**
+
+**Query selectivity is about 0.01 and groups are relatively balance**
+
+```bash
 python3 amplifier.py \
-    -dataset dataset/flights.csv \
+    -dataset dataset/flights-rep4.csv \
     -P Origin \
     -G DayofMonth \
     -M Distance \
@@ -81,6 +107,26 @@ python3 amplifier.py \
     -op '=' \
     -s0 1000 \
     -lowest 80 \
+    -MultiTest 1 \
+    -min_data_prob 0.1 \
+    -min_shots 30 \
+    -fast-simu 1
+```
+
+**SQL: `select officer_race, AVG(driver_age) FROM police WHERE road_number=2 GROUP BY officer_race`**
+
+**Query selectivity is about 0.01 and groups are very imbalance**
+
+```bash
+python3 amplifier.py \
+    -dataset dataset/police-rep4.csv \
+    -P road_number \
+    -G officer_race \
+    -M driver_age \
+    -P_V 2 \
+    -op '=' \
+    -s0 1000 \
+    -lowest 200 \
     -MultiTest 1 \
     -min_data_prob 0.1 \
     -min_shots 30 \
